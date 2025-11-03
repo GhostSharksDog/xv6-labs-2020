@@ -440,3 +440,31 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+// 辅助函数，用于递归打印页表层级
+void vmprint_recursive(pagetable_t pagetable, int level) {
+  // 遍历当前页表的512个PTE
+  for (int i = 0; i < 512; i++) {
+    pte_t pte = pagetable[i];
+    // 检查PTE是否有效（PTE_V标志位被设置）
+    if (pte & PTE_V) {
+      // 打印缩进（".."数量表示层级深度）
+      for (int j = 0; j < level; j++) {
+        printf(".. ");
+      }
+      // 打印PTE索引、完整PTE值和对应的物理地址
+      printf("..%d: pte %p pa %p\n", i, pte, PTE2PA(pte));
+      // 如果当前不是最后一级（level < 2），递归打印下一级页表
+      if (level < 2) {
+        uint64 child_pa = PTE2PA(pte);
+        vmprint_recursive((pagetable_t)child_pa, level + 1);
+      }
+    }
+  }
+}
+ 
+// 主打印函数
+void vmprint(pagetable_t pagetable) {
+  printf("page table %p\n", pagetable);
+  vmprint_recursive(pagetable, 0);  // 从顶级页表（深度0）开始递归
+}
