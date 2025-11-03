@@ -95,3 +95,33 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+uint64 sys_sigalarm(void) {
+    int interval;
+    uint64 handler;
+    struct proc *p;
+    // 要求时间间隔非负
+    if (argint(0, &interval) < 0 || argaddr(1, &handler) < 0 || interval < 0) {
+        return -1;
+    }
+    // lab4-3
+    p = myproc();
+    p->alarm_interval = interval;
+    p->alarm_handler = (void (*)())handler;
+    p->alarm_ticks = 0;    // 重置过去时钟数
+
+    return 0;
+}
+
+uint64 sys_sigreturn(void) {
+    struct proc* p = myproc();
+    // alarm_trapframe must have the copy of trapframe
+    if(p->alarm_trapframe != p->trapframe + 512) {
+        return -1;
+    }
+    memmove(p->trapframe, p->alarm_trapframe, sizeof(struct trapframe));   // restore the trapframe
+    p->alarm_ticks = 0;     // prevent re-entrant
+    p->alarm_trapframe = 0;    // 置零
+    return p->trapframe->a0;	// 返回a0,避免被返回值覆盖
+}
