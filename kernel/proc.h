@@ -83,6 +83,7 @@ struct trapframe {
 enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
+// kernel/proc.h
 struct proc {
   struct spinlock lock;
 
@@ -103,5 +104,5 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  pagetable_t kernelpgtbl;     // 存储进程独享的内核态页表
+  pagetable_t kernelpgtbl;     // 新建一个独立的内核态页表
 };
